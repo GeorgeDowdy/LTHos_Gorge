@@ -2,39 +2,58 @@ import time
 import os
 import subprocess
 import getpass  # To get the current username
+import sys
 
 # ANSI escape code for dark green text
 DARK_GREEN = '\033[32m'
 RESET = '\033[0m'
 
 # List of developer usernames
-developer_usernames = ["roger", "s10095479"]  # Add more usernames as needed
+developer_usernames = ["roger", "s10095479", "georg"]  # Add more usernames as needed
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 def print_with_delay(text, delay=0.2):
+    """Print text with a delay between lines unless space is pressed to skip"""
     for line in text.splitlines():
         print(DARK_GREEN + line + RESET)
-        time.sleep(delay)
+        if not wait_for_spacebar():
+            time.sleep(delay)
+
+def wait_for_spacebar():
+    """Detect if the spacebar is pressed (non-blocking)"""
+    if sys.platform == "win32":
+        import msvcrt
+        if msvcrt.kbhit() and msvcrt.getch() == b' ':
+            return True
+    else:
+        import tty
+        import termios
+        # Non-blocking read on Unix-like systems (Linux/macOS)
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(fd)
+            if sys.stdin.read(1) == ' ':
+                return True
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    return False
 
 # Clear the screen first
 clear_screen()
 
 # ASCII Art for "3 stars and a swirl"
 title_screen = """
-   
-
  /$$    /$$$$$$$$ /$$   /$$                                          
 | $$   |__  $$__/| $$  | $$                                          
 | $$      | $$   | $$  | $$  /$$$$$$   /$$$$$$$                      
 | $$      | $$   | $$$$$$$$ /$$__  $$ /$$_____/                      
 | $$      | $$   | $$__  $$| $$  \ $$|  $$$$$$                       
 | $$      | $$   | $$  | $$| $$  | $$ \____  $$                      
-| $$$$$$$$| $$   | $$  | $$|  $$$$$$/ /$$$$$$$/                      
-|________/|__/   |__/  |__/ \______/ |_______/                       
-                                                                     
-                                 
+| $$$$$$$$| $$   | $$  | $$|  $$$$$$/ /$$$$$$$/                     
+|________/|__/   |__/  |__/ \______/ |_______/                          
                                                                      
  /$$$$$$$$                                /$$                     /$$
 |__  $$__/                               |__/                    | $$
@@ -45,10 +64,6 @@ title_screen = """
    | $$|  $$$$$$$| $$      | $$ | $$ | $$| $$| $$  | $$|  $$$$$$$| $$
    |__/ \_______/|__/      |__/ |__/ |__/|__/|__/  |__/ \_______/|__/
                                                                      
-                                                                     
-                                                                     
-
-
 """
 
 footer = """
@@ -117,8 +132,6 @@ elif dev_mode_enabled and user_input == '5':
         subprocess.run(["python", "LTHosDev.py"], shell=True)  # Make sure the script path is correct
     else:
         print(DARK_GREEN + "ERR - User is not developer." + RESET)
-
-
 
 else:
     print(DARK_GREEN + "Invalid choice. Exiting..." + RESET)
